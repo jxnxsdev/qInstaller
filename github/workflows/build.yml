@@ -1,0 +1,80 @@
+name: Beat Saber Mod Automation
+
+on:
+  schedule:
+    # Runs every 12 hours
+    - cron: "0 */12 * * *"
+  workflow_dispatch:
+
+jobs:
+  mod-release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js (optional, in case we need node)
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+
+    - name: Fetch mods.json from external URL
+      run: curl -o mods.json https://raw.githubusercontent.com/ComputerElite/ComputerElite.github.io/main/tools/Beat_Saber/mods.json
+
+    - name: Parse mods.json and get version keys
+      id: get_versions
+      run: |
+        # Use jq to get all version keys
+        versions=$(jq -r 'keys[]' mods.json)
+        echo "Found versions: $versions"
+        echo "::set-output name=versions::$versions"
+
+    - name: Check for existing releases and process new versions
+      run: |
+        # Get versions from previous step
+        versions="${{ steps.get_versions.outputs.versions }}"
+
+        # Initialize mod version counter
+        mod_version="1.0.0"
+
+        for version in $versions; do
+          # Check if release exists for this version
+          if gh release view "$version" >/dev/null 2>&1; then
+            echo "Release already exists for version $version, skipping..."
+            continue
+          fi
+
+          echo "Processing version $version"
+
+          # Create and checkout a new branch for the version
+          git checkout -b "version-$version"
+
+          # Copy mod.json and cover.png from the main branch
+          git checkout main -- mod.json cover.png
+
+          # Replace placeholders in mod.json with actual values
+          sed -i "s/{package_version}/$version/g" mod.json
+          sed -i "s/{mod_version}/$mod_version/g" mod.json
+
+          # Commit changes to the branch
+          git add mod.json
+          git commit -m "Update mod.json for version $version"
+
+          # Push the branch
+          git push origin "version-$version"
+
+          # Create a zip file (rename to .qmod)
+          zip "$version.zip" mod.json cover.png
+          mv "$version.zip" "$version.qmod"
+
+          # Create a GitHub release with the .qmod file as an asset
+          gh release create "$version" "$version.qmod" --title "Release $version" --notes "Automated release for version $version"
+
+          # Increment mod version for next release
+          mod_version=$(awk -F. -v OFS=. '{ $NF++; print }' <<< "$mod_version")
+        done
+
+    - name: Push changes
+      run: |
+        git push origin --all
