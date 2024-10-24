@@ -39,6 +39,10 @@ jobs:
       run: |
         git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
 
+    - name: Set GH_TOKEN environment variable
+      run: |
+        echo "GH_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
+
     - name: Check for existing releases and process new versions
       run: |
         # Get versions from previous step
