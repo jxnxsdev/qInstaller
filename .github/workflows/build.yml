@@ -35,6 +35,10 @@ jobs:
         echo "Found versions: $versions"
         echo "::set-output name=versions::$versions"
 
+    - name: Set up GitHub authentication
+      run: |
+        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+
     - name: Check for existing releases and process new versions
       run: |
         # Get versions from previous step
