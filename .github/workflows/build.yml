@@ -25,7 +25,7 @@ jobs:
         git config --local user.name "GitHub Actions Bot"
 
     - name: Fetch mods.json from external URL
-      run: curl -o mods.json https://raw.githubusercontent.com/ComputerElite/ComputerElite.github.io/main/tools/Beat_Saber/mods.json
+      run: curl -o mods.json https://mods.bsquest.xyz/mods.json
 
     - name: Parse mods.json and get version keys
       id: get_versions
