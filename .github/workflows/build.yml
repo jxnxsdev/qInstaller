@@ -30,10 +30,12 @@ jobs:
     - name: Parse mods.json and get version keys
       id: get_versions
       run: |
-        # Use jq to get all version keys
-        versions=$(jq -r 'keys[]' mods.json)
+        versions=$(jq -r 'keys[]' mods.json | grep -v '^$') # Filter out any empty lines
         echo "Found versions: $versions"
-        echo "::set-output name=versions::$versions"
+        echo "$versions" | tr '\n' ' ' > versions.txt # Store versions in a text file
+        echo "Versions list saved to versions.txt"
+        echo "VERSION_LIST=$(<versions.txt)" >> $GITHUB_ENV
+
 
     - name: Set up GitHub authentication
       run: |
@@ -45,22 +47,24 @@ jobs:
 
     - name: Check for existing releases and process new versions
       run: |
-        # Get versions from previous step
-        versions="${{ steps.get_versions.outputs.versions }}"
+        # Get versions from the environment variable
+        versions="${{ env.VERSION_LIST }}"
         
         # Initialize mod version counter
         mod_version="1.0.0"
         
-        # Split versions into an array and iterate over them
+        # Loop through all versions (split by space)
         for version in $versions; do
+          version=$(echo $version | xargs) # Remove any leading/trailing whitespace
+          echo "Processing version: $version"
+    
           # Check if release exists for this version
           if gh release view "$version" >/dev/null 2>&1; then
             echo "Release already exists for version $version, skipping..."
             continue
           fi
     
-          echo "Processing version $version"
-    
+          echo "Creating branch for version $version"
           # Create and checkout a new branch for the version
           git checkout -b "version-$version"
     
@@ -91,6 +95,7 @@ jobs:
           # Checkout main branch again before processing the next version
           git checkout main
         done
+
 
     - name: Push changes
       run: |
