@@ -7,7 +7,7 @@
   "modloader": "Scotland2",
   "packageId": "com.beatgames.beatsaber",
   "packageVersion": "{package_version}",
-  "description": "Literally just a json file which allows you to install .qsaber, .qwall and .qbloq files using ModsBeforeFriday. NOTE: These are outdated formats. New models should be compiled to the newer formats!",
+  "description": "THIS IS NOT THE QOSMETICS MOD! It's literally just a json file which allows you to install .qsaber, .qwall and .qbloq files using ModsBeforeFriday. NOTE: These are outdated formats. New models should be compiled to the newer formats!",
   "coverImage": "cover.png",
   "dependencies": [],
   "lateModFiles": [],
